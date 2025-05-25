@@ -1,0 +1,6 @@
+# LXC role vars
+
+lxc_host_debs:
+  - lxc
+  - debootstrap
+  - lxc-templates

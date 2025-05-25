@@ -1,0 +1,17 @@
+# LXC tasks
+
+- name: Include LXC host block
+  block:
+    - name: Include LXC hosts tasks
+      include_tasks:
+        file: lxc_host.yml
+  when:
+    lxc_target_type == "lxc_host"
+
+- name: Include LXC container block
+  block:
+    - name: Include LXC container tasks
+      include_tasks:
+        file: lxc_container.yml
+  when:
+    lxc_target_type == "lxc_container"

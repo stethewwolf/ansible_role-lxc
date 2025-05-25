@@ -1,0 +1,11 @@
+# Default Values for LXC role
+
+# lxc target type
+# this manage the target type:
+# * lxc_container
+# * lxc_host
+lxc_target_type: lxc_host
+
+
+# lxc target type
+lxc_host_lxc_path: "/srv/lxc"

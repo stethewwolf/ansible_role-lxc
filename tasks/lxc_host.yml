@@ -1,0 +1,14 @@
+# LXC tasks used to manage lxc host
+
+- name: Install LXC packages
+  ansible.builtin.apt:
+    pkg: "{{ lxc_host_debs }}"
+    state: present
+    update_cache: yes
+
+- name: Configure LXC service
+  ansible.builtin.template:
+    src: lxc_host_container.conf.j2
+    dest: /etc/lxc/lxc.conf
+    owner: root
+    group: root
