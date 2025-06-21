@@ -1,0 +1,20 @@
+# LXC configuration file
+# this file contains default conf for lxc
+
+# lxc.net.0.type = veth
+# lxc.net.0.link = lxcbr0
+# lxc.net.0.flags = up
+
+lxc.apparmor.profile = generated
+lxc.apparmor.allow_nesting = 1
+
+lxc.net.0.type = veth
+lxc.net.0.link = br_internal
+lxc.net.0.flags = up
+lxc.net.0.name = eth0
+
+lxc.net.1.type = veth
+lxc.net.1.link = br_external
+lxc.net.1.flags = up
+lxc.net.1.name = eth1
+

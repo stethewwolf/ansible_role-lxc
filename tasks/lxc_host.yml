@@ -8,7 +8,14 @@
 
 - name: Configure LXC service
   ansible.builtin.template:
-    src: lxc_host_container.conf.j2
+    src: lxc_host.conf.j2
     dest: /etc/lxc/lxc.conf
+    owner: root
+    group: root
+
+- name: Configure Defaults for LXC service
+  ansible.builtin.template:
+    src: lxc_host_default.conf.j2
+    dest: /etc/lxc/default.conf
     owner: root
     group: root
