@@ -1,0 +1,22 @@
+---
+
+# files needed to manage containers
+
+- name: Ensure container exists
+  command: >
+    lxc-create -n {{ lxc_container_name }} -t {{ lxc_container_template }}
+  args:
+    creates: "{{ lxc_host_lxc_path }}/{{ lxc_container_name }}"
+  delegate_to: "{{ lxc_host }}"
+
+- name: Ensure container is {{ lxc_container_state }}
+  command: >
+    lxc-start -n {{ lxc_container_name }}
+  when: lxc_container_state == 'started'
+  delegate_to: "{{ lxc_host }}"
+
+- name: Run a command in the container
+  command: >
+    lxc-attach -n {{ lxc_container_name }} -- id
+  delegate_to: "{{ lxc_host }}"
+  when: lxc_container_state == 'started'

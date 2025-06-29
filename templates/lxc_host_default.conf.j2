@@ -8,13 +8,10 @@
 lxc.apparmor.profile = generated
 lxc.apparmor.allow_nesting = 1
 
-lxc.net.0.type = veth
-lxc.net.0.link = br_internal
-lxc.net.0.flags = up
-lxc.net.0.name = eth0
+{% for net in lxc_host_default_nets %}
+lxc.net.{{ loop.index0 }}.type  = {{ net.type }}
+lxc.net.{{ loop.index0 }}.link  = {{ net.link }}
+lxc.net.{{ loop.index0 }}.flags = {{ net.flags }}
+lxc.net.{{ loop.index0 }}.name  = {{ net.name }}
 
-lxc.net.1.type = veth
-lxc.net.1.link = br_external
-lxc.net.1.flags = up
-lxc.net.1.name = eth1
-
+{% endfor %}

@@ -9,9 +9,13 @@ lxc_target_type: lxc_host
 # lxc target type
 lxc_host_lxc_path: "/srv/lxc"
 
+#container_path: "{{ lxc_host_lxc_path }}/{{ container_name }}"
+
 # default net links
 lxc_host_default_nets: []
 # - type = veth
 #   link = br_internal
 #   flags = up
 #   name = eth0
+
+lxc_container_state: "stopped"
