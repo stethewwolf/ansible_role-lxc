@@ -2,21 +2,149 @@
 
 # files needed to manage containers
 
+- name: Check if LXC container exists
+  stat:
+    path: "{{ lxc_host_lxc_path }}/{{ lxc_container_name }}"
+  register: lxc_container_stat
+  delegate_to: "{{ lxc_host }}"
+
+- name: Set fact whether container exists
+  set_fact:
+    lxc_container_exists: "{{ lxc_container_stat.stat.exists }}"
+  delegate_to: "{{ lxc_host }}"
+
 - name: Ensure container exists
   command: >
     lxc-create -n {{ lxc_container_name }} -t {{ lxc_container_template }}
   args:
     creates: "{{ lxc_host_lxc_path }}/{{ lxc_container_name }}"
   delegate_to: "{{ lxc_host }}"
+  when: not lxc_container_exists|bool
+
+- name: Check if LXC container exists
+  stat:
+    path: "{{ lxc_host_lxc_path }}/{{ lxc_container_name }}"
+  register: lxc_container_stat
+  delegate_to: "{{ lxc_host }}"
+
+- name: Set fact whether container exists
+  set_fact:
+    lxc_container_exists: "{{ lxc_container_stat.stat.exists }}"
+  delegate_to: "{{ lxc_host }}"
+
+- name: Ensure interfaces.d exist
+  file: path="{{ lxc_host_lxc_path }}/{{ lxc_container_name }}//etc/network/interfaces.d"  state=directory
+  delegate_to: "{{ lxc_host }}"
+  when: lxc_container_exists|bool
+
+- name: Ensure interface are configured
+  template: src=interface_entry.j2 dest="{{ lxc_host_lxc_path }}/{{ lxc_container_name }}/rootfs/etc/network/interfaces.d/if-{{item.name}}"
+  with_items: "{{ lxc_network_interfaces }}"
+  delegate_to: "{{ lxc_host }}"
+  when: lxc_container_exists|bool
+
+- name: Ensure /etc/network/interface are configured
+  template: src=interfaces.j2 dest="{{ lxc_host_lxc_path }}/{{ lxc_container_name }}/rootfs/etc/network/interfaces" backup=yes
+  delegate_to: "{{ lxc_host }}" 
+  when: lxc_container_exists|bool
 
 - name: Ensure container is {{ lxc_container_state }}
   command: >
     lxc-start -n {{ lxc_container_name }}
   when: lxc_container_state == 'started'
   delegate_to: "{{ lxc_host }}"
+  when: lxc_container_exists|bool
 
 - name: Run a command in the container
   command: >
     lxc-attach -n {{ lxc_container_name }} -- id
   delegate_to: "{{ lxc_host }}"
-  when: lxc_container_state == 'started'
+  when: lxc_container_state == 'started' and lxc_container_exists|bool
+
+- name: Update apt cache
+  command: >
+    lxc-attach -n {{ lxc_container_name }} -- apt-get update
+  delegate_to: "{{ lxc_host }}"
+  when: lxc_container_state == 'started' and lxc_container_exists|bool
+
+- name: Install python in the container
+  command: >
+    lxc-attach -n {{ lxc_container_name }} -- apt-get install python3 -y
+  delegate_to: "{{ lxc_host }}"
+  when: lxc_container_state == 'started' and lxc_container_exists|bool
+
+- name: Install sudo in the container
+  command: >
+    lxc-attach -n {{ lxc_container_name }} -- apt-get install sudo -y
+  delegate_to: "{{ lxc_host }}"
+  when: lxc_container_state == 'started' and lxc_container_exists|bool
+
+- name: Check if system user exists inside LXC container
+  command: >
+    lxc-attach -n {{ lxc_container_name }} -- id -u {{ lxc_system_user }}
+  register: lxc_user_check
+  delegate_to: "{{ lxc_host }}"
+  ignore_errors: true
+  when: lxc_container_state == 'started' and lxc_container_exists|bool
+
+- name: Set fact whether system user exists
+  set_fact:
+    lxc_system_user_exists: "{{ lxc_user_check.rc == 0 }}"
+
+- name: create {{ lxc_system_user }}
+  command: >
+    lxc-attach -n {{ lxc_container_name }} -- useradd -m -r {{ lxc_system_user }}
+  delegate_to: "{{ lxc_host }}"
+  when: lxc_container_state == 'started' and lxc_container_exists|bool and not lxc_system_user_exists
+
+- name: Add {{ lxc_system_user }} to sudo group
+  command: >
+    lxc-attach -n {{ lxc_container_name }} --  usermod -aG sudo {{ lxc_system_user }}
+  delegate_to: "{{ lxc_host }}"
+  when: lxc_container_state == 'started' and lxc_container_exists|bool and not lxc_system_user_exists
+
+- name: Add create ssh folder {{ lxc_system_user }}
+  command: >
+    lxc-attach -n {{ lxc_container_name }} --  mkdir /home/{{ lxc_system_user }}/.ssh/
+  delegate_to: "{{ lxc_host }}"
+  when: lxc_container_state == 'started' and lxc_container_exists|bool and not lxc_system_user_exists
+
+- name: fix ssh folder {{ lxc_system_user }} permission
+  command: >
+    lxc-attach -n {{ lxc_container_name }} --  chown {{ lxc_system_user }}:{{ lxc_system_user }} /home/{{ lxc_system_user }}/.ssh/
+  delegate_to: "{{ lxc_host }}"
+  when: lxc_container_state == 'started' and lxc_container_exists|bool and not lxc_system_user_exists
+
+- name: for {{ lxc_system_user }} ssh folder
+  command: >
+    lxc-attach -n {{ lxc_container_name }} --  mkdir /home/{{ lxc_system_user }}/.ssh/
+  delegate_to: "{{ lxc_host }}"
+  ignore_errors: true
+  when: lxc_container_exists|bool
+
+- name: Save authorized ssh key
+  copy:
+    dest: "{{ lxc_host_lxc_path }}/{{ lxc_container_name }}/rootfs/home/{{ lxc_system_user }}/.ssh/authorized_keys"
+    content: "{{ lxc_system_user_ssh_authorized_keys }}"
+    owner: root
+    group: root
+    mode: '0640'
+  when: lxc_container_exists|bool
+  delegate_to: "{{ lxc_host }}"
+
+- name: configure sudo for {{ lxc_system_user }}
+  copy:
+    dest: "{{ lxc_host_lxc_path }}/{{ lxc_container_name }}/rootfs/etc/sudoers.d/{{ lxc_system_user }}"
+    content: "{{ lxc_system_user }} ALL=(ALL) NOPASSWD: ALL"
+    owner: root
+    group: root
+    mode: '0640'
+  when: lxc_container_exists|bool
+  delegate_to: "{{ lxc_host }}"
+
+
+- name: for {{ lxc_system_user }} ssh folder fix owner
+  command: >
+    lxc-attach -n {{ lxc_container_name }} --  chown -R {{ lxc_system_user }}: /home/{{ lxc_system_user }}
+  delegate_to: "{{ lxc_host }}"
+  when: lxc_container_exists|bool
