@@ -15,7 +15,7 @@
 
 - name: Ensure container exists
   command: >
-    lxc-create -n {{ lxc_container_name }} -t {{ lxc_container_template }}
+    lxc-create -n {{ lxc_container_name }} -t {{ lxc_container_template }} -- -r {{ lxc_container_release }}
   args:
     creates: "{{ lxc_host_lxc_path }}/{{ lxc_container_name }}"
   delegate_to: "{{ lxc_host }}"
@@ -79,6 +79,12 @@
   delegate_to: "{{ lxc_host }}"
   when: lxc_container_state == 'started' and lxc_container_exists|bool
 
+- name: Install cron in the container
+  command: >
+    lxc-attach -n {{ lxc_container_name }} -- apt-get install cron -y
+  delegate_to: "{{ lxc_host }}"
+  when: lxc_container_state == 'started' and lxc_container_exists|bool
+
 - name: Check if system user exists inside LXC container
   command: >
     lxc-attach -n {{ lxc_container_name }} -- id -u {{ lxc_system_user }}
@@ -104,23 +110,16 @@
   when: lxc_container_state == 'started' and lxc_container_exists|bool and not lxc_system_user_exists
 
 - name: Add create ssh folder {{ lxc_system_user }}
-  command: >
-    lxc-attach -n {{ lxc_container_name }} --  mkdir /home/{{ lxc_system_user }}/.ssh/
   delegate_to: "{{ lxc_host }}"
   when: lxc_container_state == 'started' and lxc_container_exists|bool and not lxc_system_user_exists
+  command: >
+    lxc-attach -n {{ lxc_container_name }} -- mkdir /home/{{ lxc_system_user }}/.ssh/
 
 - name: fix ssh folder {{ lxc_system_user }} permission
   command: >
     lxc-attach -n {{ lxc_container_name }} --  chown {{ lxc_system_user }}:{{ lxc_system_user }} /home/{{ lxc_system_user }}/.ssh/
   delegate_to: "{{ lxc_host }}"
   when: lxc_container_state == 'started' and lxc_container_exists|bool and not lxc_system_user_exists
-
-- name: for {{ lxc_system_user }} ssh folder
-  command: >
-    lxc-attach -n {{ lxc_container_name }} --  mkdir /home/{{ lxc_system_user }}/.ssh/
-  delegate_to: "{{ lxc_host }}"
-  ignore_errors: true
-  when: lxc_container_exists|bool
 
 - name: Save authorized ssh key
   copy:
@@ -141,7 +140,6 @@
     mode: '0640'
   when: lxc_container_exists|bool
   delegate_to: "{{ lxc_host }}"
-
 
 - name: for {{ lxc_system_user }} ssh folder fix owner
   command: >

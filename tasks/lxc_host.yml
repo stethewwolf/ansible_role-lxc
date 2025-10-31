@@ -19,3 +19,11 @@
     dest: /etc/lxc/default.conf
     owner: root
     group: root
+
+- name: Configure IPv4 forwarding
+  ansible.builtin.copy:
+    content: 'net.ipv4.ip_forward=1'
+    dest: /etc/sysctl.d/99-lxc_forwarding.conf
+
+- name: Enable IPv4 forwarding
+  ansible.builtin.command: sudo sysctl -w net.ipv4.ip_forward=1
