@@ -1,0 +1,12 @@
+[Unit]
+Description=LXC Container {{ lxc_container_name }}
+After=network.target
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/lxc-start -n {{ lxc_container_name }}
+ExecStop=/usr/bin/lxc-stop -n {{ lxc_container_name }}
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

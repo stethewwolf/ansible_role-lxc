@@ -146,3 +146,18 @@
     lxc-attach -n {{ lxc_container_name }} --  chown -R {{ lxc_system_user }}: /home/{{ lxc_system_user }}
   delegate_to: "{{ lxc_host }}"
   when: lxc_container_exists|bool
+
+- name: Template constaner autostart
+  when: lxc_container_autostart|bool
+  delegate_to: "{{ lxc_host }}"
+  template: src=lxc_container_systemd_service.j2 dest="/etc/systemd/system/lxc-{{ lxc_container_name }}.service" backup=yes
+
+
+- name: Start service httpd, if not started
+  when: lxc_container_autostart|bool
+  delegate_to: "{{ lxc_host }}"
+  systemd_service:
+    name: "lxc-{{ lxc_container_name }}.service"
+    enabled: true
+    daemon_reload: true
+

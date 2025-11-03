@@ -19,6 +19,7 @@ lxc_host_default_nets: []
 #   name = eth0
 
 lxc_container_state: "stopped"
+lxc_container_autostart: false
 
 lxc_network_interfaces: []
 #  - name: "eth1"
