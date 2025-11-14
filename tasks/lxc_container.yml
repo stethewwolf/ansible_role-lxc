@@ -1,5 +1,4 @@
 ---
-
 # files needed to manage containers
 
 - name: Check if LXC container exists
@@ -44,22 +43,21 @@
   when: lxc_container_exists|bool
 
 - name: Ensure /etc/network/interface are configured
-  template: src=interfaces.j2 dest="{{ lxc_host_lxc_path }}/{{ lxc_container_name }}/rootfs/etc/network/interfaces" backup=yes
-  delegate_to: "{{ lxc_host }}" 
   when: lxc_container_exists|bool
+  delegate_to: "{{ lxc_host }}" 
+  template: src=interfaces.j2 dest="{{ lxc_host_lxc_path }}/{{ lxc_container_name }}/rootfs/etc/network/interfaces" backup=yes
 
 - name: Ensure container is {{ lxc_container_state }}
+  delegate_to: "{{ lxc_host }}"
+  when: lxc_container_exists|bool and lxc_container_state == 'started'
   command: >
     lxc-start -n {{ lxc_container_name }}
-  when: lxc_container_state == 'started'
-  delegate_to: "{{ lxc_host }}"
-  when: lxc_container_exists|bool
 
 - name: Run a command in the container
-  command: >
-    lxc-attach -n {{ lxc_container_name }} -- id
   delegate_to: "{{ lxc_host }}"
   when: lxc_container_state == 'started' and lxc_container_exists|bool
+  command: >
+    lxc-attach -n {{ lxc_container_name }} -- id
 
 - name: Update apt cache
   command: >
