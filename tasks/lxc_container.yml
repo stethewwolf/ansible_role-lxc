@@ -95,7 +95,13 @@
   set_fact:
     lxc_system_user_exists: "{{ lxc_user_check.rc == 0 }}"
 
-- name: create {{ lxc_system_user }}
+- name: create group {{ lxc_system_user }}
+  when: lxc_container_state == 'started' and lxc_container_exists|bool and not lxc_system_user_exists
+  delegate_to: "{{ lxc_host }}"
+  command: >
+    lxc-attach -n {{ lxc_container_name }} -- groupadd -r {{ lxc_system_user }} -g {{ lxc_system_user_gid }}
+
+- name: create user {{ lxc_system_user }}
   when: lxc_container_state == 'started' and lxc_container_exists|bool and not lxc_system_user_exists
   delegate_to: "{{ lxc_host }}"
   command: >
