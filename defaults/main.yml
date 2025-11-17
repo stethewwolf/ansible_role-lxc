@@ -34,7 +34,9 @@ lxc_network_interfaces: []
 #    netmask: "255.255.255.0"
 
 lxc_system_user: debadm
-
+lxc_system_user_password: "MyStr0nGP4sswD!" 
+lxc_system_user_gid: 999
+lxc_system_user_uid: 999
 
 lxc_system_user_ssh_authorized_keys: >
   # this file is empty

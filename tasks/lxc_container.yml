@@ -66,46 +66,46 @@
   when: lxc_container_state == 'started' and lxc_container_exists|bool
 
 - name: Install python in the container
+  when: lxc_container_state == 'started' and lxc_container_exists|bool
+  delegate_to: "{{ lxc_host }}"
   command: >
     lxc-attach -n {{ lxc_container_name }} -- apt-get install python3 -y
-  delegate_to: "{{ lxc_host }}"
-  when: lxc_container_state == 'started' and lxc_container_exists|bool
 
 - name: Install sudo in the container
+  when: lxc_container_state == 'started' and lxc_container_exists|bool
+  delegate_to: "{{ lxc_host }}"
   command: >
     lxc-attach -n {{ lxc_container_name }} -- apt-get install sudo -y
-  delegate_to: "{{ lxc_host }}"
-  when: lxc_container_state == 'started' and lxc_container_exists|bool
 
 - name: Install cron in the container
+  when: lxc_container_state == 'started' and lxc_container_exists|bool
+  delegate_to: "{{ lxc_host }}"
   command: >
     lxc-attach -n {{ lxc_container_name }} -- apt-get install cron -y
-  delegate_to: "{{ lxc_host }}"
-  when: lxc_container_state == 'started' and lxc_container_exists|bool
 
 - name: Check if system user exists inside LXC container
+  when: lxc_container_state == 'started' and lxc_container_exists|bool
+  ignore_errors: true
+  delegate_to: "{{ lxc_host }}"
+  register: lxc_user_check
   command: >
     lxc-attach -n {{ lxc_container_name }} -- id -u {{ lxc_system_user }}
-  register: lxc_user_check
-  delegate_to: "{{ lxc_host }}"
-  ignore_errors: true
-  when: lxc_container_state == 'started' and lxc_container_exists|bool
 
 - name: Set fact whether system user exists
   set_fact:
     lxc_system_user_exists: "{{ lxc_user_check.rc == 0 }}"
 
 - name: create {{ lxc_system_user }}
-  command: >
-    lxc-attach -n {{ lxc_container_name }} -- useradd -m -r {{ lxc_system_user }}
-  delegate_to: "{{ lxc_host }}"
   when: lxc_container_state == 'started' and lxc_container_exists|bool and not lxc_system_user_exists
+  delegate_to: "{{ lxc_host }}"
+  command: >
+    lxc-attach -n {{ lxc_container_name }} -- useradd -m -r {{ lxc_system_user }} -p {{ lxc_system_user_password }} -g {{ lxc_system_user_gid }} -u {{ lxc_system_user_uid }}
 
 - name: Add {{ lxc_system_user }} to sudo group
+  when: lxc_container_state == 'started' and lxc_container_exists|bool and not lxc_system_user_exists
+  delegate_to: "{{ lxc_host }}"
   command: >
     lxc-attach -n {{ lxc_container_name }} --  usermod -aG sudo {{ lxc_system_user }}
-  delegate_to: "{{ lxc_host }}"
-  when: lxc_container_state == 'started' and lxc_container_exists|bool and not lxc_system_user_exists
 
 - name: Add create ssh folder {{ lxc_system_user }}
   delegate_to: "{{ lxc_host }}"
