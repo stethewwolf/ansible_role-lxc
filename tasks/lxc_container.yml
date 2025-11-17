@@ -98,7 +98,7 @@
 - name: create system groups in container
   when: lxc_container_state == 'started' and lxc_container_exists|bool and not lxc_system_user_exists
   delegate_to: "{{ lxc_host }}"
-  with_items: lxc_system_groups
+  with_items: "{{ lxc_system_groups }}"
   command: >
     lxc-attach -n {{ lxc_container_name }} -- groupadd -r {{ item['name'] }} -g {{ item['gid'] }}
 
