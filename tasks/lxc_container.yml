@@ -2,10 +2,10 @@
 # files needed to manage containers
 
 - name: Check if LXC container exists
+  delegate_to: "{{ lxc_host }}"
+  register: lxc_container_stat
   stat:
     path: "{{ lxc_host_lxc_path }}/{{ lxc_container_name }}"
-  register: lxc_container_stat
-  delegate_to: "{{ lxc_host }}"
 
 - name: Set fact whether container exists
   set_fact:
