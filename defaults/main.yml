@@ -42,3 +42,5 @@ lxc_system_groups: []
 
 lxc_system_user_ssh_authorized_keys: >
   # this file is empty
+
+lxc_container_custom_confs: []

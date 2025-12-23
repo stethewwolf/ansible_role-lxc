@@ -47,6 +47,15 @@
   delegate_to: "{{ lxc_host }}" 
   template: src=interfaces.j2 dest="{{ lxc_host_lxc_path }}/{{ lxc_container_name }}/rootfs/etc/network/interfaces" backup=yes
 
+- name: Ensure custom config are set
+  delegate_to: "{{ lxc_host }}" 
+  with_items: "{{ lxc_container_custom_confs }}"
+  ansible.builtin.lineinfile:
+    path: "{{ lxc_host_lxc_path }}/{{ lxc_container_name }}/config"
+    line: "{{ item }}"
+    state: present
+    create: yes
+
 - name: Ensure container is {{ lxc_container_state }}
   delegate_to: "{{ lxc_host }}"
   when: lxc_container_exists|bool and lxc_container_state == 'started'
@@ -163,8 +172,7 @@
   delegate_to: "{{ lxc_host }}"
   template: src=lxc_container_systemd_service.j2 dest="/etc/systemd/system/lxc-{{ lxc_container_name }}.service" backup=yes
 
-
-- name: Start service httpd, if not started
+- name: Start service, if not started
   when: lxc_container_autostart|bool
   delegate_to: "{{ lxc_host }}"
   systemd_service:
